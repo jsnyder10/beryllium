@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<h1>Tables</h1>
+{% for table in tables %}
+{{ table }}
+{% endfor %}
+<h1>Files</h1>
+{% for file in files %}
+{{ file }}
+{% endfor %}
+<h1>Uploaded</h1>
+{% for upload in uploaded %}
+{{ upload }}
+{% endfor %}
+<h1>Unuploaded</h1>
+{% for unupload in unuploaded %}
+{{ unupload }}
+{% endfor %}
+{% endblock %}

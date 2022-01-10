@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+  <style> body { margin: 0; } </style>
+  <script src="{{ url_for('static', filename='dependencies/globe.gl.min.js') }}"></script>
+
+  <!--<script src="../../dist/globe.gl.js"></script>-->
+
+<div id="globeViz"></div>
+
+  <script>
+    const globe = Globe()
+      .globeImageUrl('{{ url_for('static', filename='dependencies/earth-dark.jpg') }}')
+      .bumpImageUrl('{{ url_for('static', filename='dependencies/earth-topology.png') }}')
+      .backgroundImageUrl('{{ url_for('static', filename='dependencies/night-sky.png') }}')
+      (document.getElementById('globeViz'));
+
+    // from https://github.com/telegeography/www.submarinecablemap.com
+    fetch('{{ url_for('static', filename='dependencies/cable-geo.json') }}')
+      .then(r =>r.json())
+      .then(cablesGeo => {
+        let cablePaths = [];
+        cablesGeo.features.forEach(({ geometry, properties }) => {
+          geometry.coordinates.forEach(coords => cablePaths.push({ coords, properties }));
+        });
+
+        globe
+          .pathsData(cablePaths)
+          .pathPoints('coords')
+          .pathPointLat(p => p[1])
+          .pathPointLng(p => p[0])
+          .pathColor(path => path.properties.color)
+          .pathLabel(path => path.properties.name)
+          .pathDashLength(0.1)
+          .pathDashGap(0.008)
+          .pathDashAnimateTime(12000);
+      });
+  </script>
+  {% endblock %}
