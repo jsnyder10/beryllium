@@ -12,6 +12,10 @@ from app.translate import translate
 from app.main import bp
 import os
 
+import pandas as pd
+from sqlalchemy import create_engine, MetaData, Table, Column, ForeignKey
+from sqlalchemy.ext.automap import automap_base
+
 
 @bp.before_app_request
 def before_request():
@@ -22,45 +26,38 @@ def before_request():
     g.locale = str(get_locale())
 
 
-@bp.route('/upload', methods=['GET', 'POST'])
-@login_required
-def upload():
-    '''
-    path='/home/jon/microblog/app/static/upload/'
-    name='Sample_Employee_data_xls.xls'
+def upload_excel(name):
+    path=current_app.config['BASEDIR']
+    path=path+'/app/static/upload/'
+
     df=pd.read_excel(path+name)
     df.to_sql(name,con=db.engine)
     engine.table_names()
 
     from sqlalchemy import create_engine, MetaData, Table, Column, ForeignKey
     from sqlalchemy.ext.automap import automap_base
-    engine = create_engine("sqlite:///mydatabase.db")
+    #engine = create_engine("sqlite:///mydatabase.db")
 
-    # produce our own MetaData object
     metadata = MetaData()
-
-    # we can reflect it ourselves from a database, using options
-    # such as 'only' to limit what tables we look at...
     metadata.reflect(engine, only=['user', 'address'])
-
-    # ... or just define our own Table objects with it (or combine both)
-    Table('user_order', metadata,
-                    Column('id', Integer, primary_key=True),
-                    Column('user_id', ForeignKey('user.id'))
-                )
-
     # we can then produce a set of mappings from this MetaData.
     Base = automap_base(metadata=metadata)
-
-    # calling prepare() just sets up mapped classes and relationships.
     Base.prepare()
 
     # mapped classes are ready
     User, Address, Order = Base.classes.user, Base.classes.address,\
     Base.classes.user_order
-    '''
-    path='/home/jon/microblog/app/static/upload/'
+
+@bp.route('/upload', methods=['GET', 'POST'])
+@login_required
+def upload():
+    path=current_app.config['BASEDIR']
+    path=path+'/app/static/upload'
     files=os.listdir(path)
+    #Clean Random Files out
+    for file in files:
+        if "Identifier" in file:
+            files.remove(file)
     unuploaded=files
     tables=db.engine.table_names()
     uploaded=[]
@@ -68,17 +65,108 @@ def upload():
         for table in tables:
             if file==table:
                 uploaded.append(file)
-    for file in files:
-        for upload in uploaded:
-            if file==upload or "Identifier" in file:
+    for upload in uploaded:
+        for file in files:
+            if file==upload:
                 unuploaded.remove(file)
-    return render_template('upload.html', title=_('Upload'), tables=tables, files=files, uploaded=uploaded, unuploaded=unuploaded)
+    return render_template('upload.html', title=_('Upload'), tables=tables, uploaded=uploaded, unuploaded=unuploaded)
+
+@bp.route('/start_upload', methods=['GET', 'POST'])
+@login_required
+def start_upload():
+    path=current_app.config['BASEDIR']
+    path=path+'/app/static/upload/'
+    files=os.listdir(path)
+    #Clean Random Files out
+    for file in files:
+        if "Identifier" in file:
+            files.remove(file)
+    unuploaded=files
+    tables=db.engine.table_names()
+    uploaded=[]
+    for file in files:
+        for table in tables:
+            if file==table:
+                uploaded.append(file)
+    for upload in uploaded:
+        for file in files:
+            if file==upload:
+                unuploaded.remove(file)
+    for unupload in unuploaded:
+        if ".xls" in unupload:
+            name=unupload[:-4]
+            print(name)
+            df=pd.read_excel(path+unupload)
+            df.to_sql(name, con=db.engine)
+            metadata = MetaData()
+            metadata.reflect(db.engine, only=[name])
+            Base = automap_base(metadata=metadata)
+            Base.prepare()
+        elif ".csv" in unuploaded:
+            name=unupload[:-4]
+            print(name)
+            df=pd.read_csv(path+unupload)
+            metadata = MetaData()
+            metadata.reflect(db.engine, only=[name])
+            Base = automap_base(metadata=metadata)
+            Base.prepare()
+    return render_template('upload.html', title=_('Upload'), tables=tables, uploaded=uploaded, unuploaded=unuploaded)
+
+
+@bp.route('/data', methods=['GET', 'POST'])
+@login_required
+def data():
+    path=current_app.config['BASEDIR']
+    path=path+'/app/static/upload'
+    files=os.listdir(path)
+    #Clean Random Files out
+    for file in files:
+        if "Identifier" in file:
+            files.remove(file)
+    unuploaded=files
+    tables=db.engine.table_names()
+    uploaded=[]
+    for file in files:
+        for table in tables:
+            if file==table:
+                uploaded.append(file)
+    for upload in uploaded:
+        for file in files:
+            if file==upload:
+                unuploaded.remove(file)
+    tables=[]
+    '''
+    #Query table/column from mapped
+    db.session.query(Base.metadata.tables['1']).filter_by(last_name='Erm').all()
+    #Pull column keys from table
+    Base.metadata.tables['1'].columns.keys()
+    '''
+    for table in uploaded:
+        metadata = MetaData()
+        metadata.reflect(db.engine, only=[table])
+        Base = automap_base(metadata=metadata)
+        Base.prepare()
+        name=table
+        columns=Base.metadata.tables[name].columns.keys()
+        tables.append({'name': name, 'columns': columns})
+    return render_template('data.html', title=_('Data'), tables=tables)
+
 
 
 @bp.route('/undersea', methods=['GET', 'POST'])
 @login_required
 def undersea():
     return render_template('undersea.html', title=_('Undersea'))
+
+@bp.route('/basic', methods=['GET', 'POST'])
+@login_required
+def basic():
+    return render_template('basic.html', title=_('Basic'))
+
+@bp.route('/ark_links', methods=['GET', 'POST'])
+@login_required
+def ark_links():
+    return render_template('ark_links.html', title=_('Ark Links'))
 
 
 @bp.route('/', methods=['GET', 'POST'])

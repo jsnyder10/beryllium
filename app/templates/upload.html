@@ -6,16 +6,15 @@
 {% for table in tables %}
 {{ table }}
 {% endfor %}
-<h1>Files</h1>
-{% for file in files %}
-{{ file }}
-{% endfor %}
 <h1>Uploaded</h1>
 {% for upload in uploaded %}
-{{ upload }}
+{{ upload }}<br>
 {% endfor %}
-<h1>Unuploaded</h1>
-{% for unupload in unuploaded %}
-{{ unupload }}
-{% endfor %}
+{% if unuploaded %}
+	<h1>Unuploaded</h1>
+	{% for unupload in unuploaded %}
+		{{ unupload }}<br>
+	{% endfor %}
+	<a href="{{ url_for('main.start_upload') }}">Start Upload</a>
+{% endif %}
 {% endblock %}

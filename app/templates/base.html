@@ -20,8 +20,19 @@
                 <ul class="nav navbar-nav">
                     <li><a href="{{ url_for('main.index') }}">{{ _('Home') }}</a></li>
                     <li><a href="{{ url_for('main.explore') }}">{{ _('Explore') }}</a></li>
-                    <li><a href="{{ url_for('main.undersea') }}">{{ _('Undersea') }}</a></li>
+                    <li>
+                  <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Visualizations
+                  <span class="caret"></span></button>
+                  <ul class="dropdown-menu">
+                    <li><a href="{{ url_for('main.undersea') }}">Undersea Cables</a></li>
+                    <li><a href="{{ url_for('main.basic') }}">Basic</a></li>
+                    <li><a href="{{ url_for('main.ark_links') }}">Ark Links</a></li>
+                  </ul>
+                </li>
+
+
                     <li><a href="{{ url_for('main.upload') }}">{{ _('Upload') }}</a></li>
+                    <li><a href="{{ url_for('main.data') }}">{{ _('Data') }}</a></li>
                 </ul>
                 {% if g.search_form %}
                 <form class="navbar-form navbar-left" method="get" action="{{ url_for('main.search') }}">
