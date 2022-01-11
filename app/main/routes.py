@@ -93,19 +93,21 @@ def start_upload():
             if file==upload:
                 unuploaded.remove(file)
     for unupload in unuploaded:
+        print('unupload name: '+unupload)
         if ".xls" in unupload:
-            name=unupload[:-4]
-            print(name)
+            name=unupload
+            print('.xls'+name)
             df=pd.read_excel(path+unupload)
             df.to_sql(name, con=db.engine)
             metadata = MetaData()
             metadata.reflect(db.engine, only=[name])
             Base = automap_base(metadata=metadata)
             Base.prepare()
-        elif ".csv" in unuploaded:
-            name=unupload[:-4]
-            print(name)
+        elif ".csv" in unupload:
+            name=unupload
+            print('CSV: '+name)
             df=pd.read_csv(path+unupload)
+            df.to_sql(name, con=db.engine)
             metadata = MetaData()
             metadata.reflect(db.engine, only=[name])
             Base = automap_base(metadata=metadata)
@@ -135,12 +137,7 @@ def data():
             if file==upload:
                 unuploaded.remove(file)
     tables=[]
-    '''
-    #Query table/column from mapped
-    db.session.query(Base.metadata.tables['1']).filter_by(last_name='Erm').all()
-    #Pull column keys from table
-    Base.metadata.tables['1'].columns.keys()
-    '''
+
     for table in uploaded:
         metadata = MetaData()
         metadata.reflect(db.engine, only=[table])
@@ -151,7 +148,19 @@ def data():
         tables.append({'name': name, 'columns': columns})
     return render_template('data.html', title=_('Data'), tables=tables)
 
-
+@bp.route('/query/<table>/<column>/<query>', methods=['GET', 'POST'])
+@login_required
+def query(table, column, query):
+    metadata = MetaData()
+    metadata.reflect(db.engine, only=[table])
+    Base = automap_base(metadata=metadata)
+    Base.prepare()
+    #Query table/column from mapped
+    #TODO change index below to column inorder to search specific columns
+    query=db.session.query(Base.metadata.tables[table]).filter_by(index=query).all()
+    #Pull column keys from table
+    Base.metadata.tables[table].columns.keys()
+    return render_template('query.html', title=_('Query'), query=query, table=table)
 
 @bp.route('/undersea', methods=['GET', 'POST'])
 @login_required
